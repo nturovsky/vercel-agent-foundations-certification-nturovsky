@@ -33,9 +33,7 @@ There is no test framework wired up.
 
 ### AI Gateway auth gotcha (chat agent)
 
-The chat agent authenticates to the Vercel AI Gateway. The gateway **prefers `AI_GATEWAY_API_KEY` over `VERCEL_OIDC_TOKEN`** when both are present. The committed `.env` contains an **invalid/expired `AI_GATEWAY_API_KEY`**, so with a normal `next dev` (which loads both `.env` and `.env.local`) the bad key wins and every agent call is rejected — surfaced in the UI as the generic "An error occurred." (the AI SDK masks the real error; check the dev-server log for `GatewayAuthenticationError`).
 
-Fix in place: `.env.local` sets `AI_GATEWAY_API_KEY=` (empty). Next.js loads `.env.local` after `.env`, so the empty value overrides the bad key and the gateway falls back to the working `VERCEL_OIDC_TOKEN`. The clean alternative is to remove/correct the key in `.env` and drop the empty override — but `.env` may be blocked by tooling permissions. After editing any `.env*`, restart the dev server.
 
 ## Architecture
 
@@ -94,6 +92,7 @@ Completed the "Workflows" workshop chapter — chat and the return action now ru
 - `components/agent-chat.tsx` — `useChat` uses `WorkflowChatTransport` (`@workflow/ai`): stores the run ID from `x-workflow-run-id` in `localStorage` on send, clears it on chat end, and reconnects to `/api/chat/{runId}/stream`. `resume` is on when a stored run ID exists.
 
 **Local-dev note:** `vercel dev` runs the workflow engine locally (Queues + Runtime Cache on ports 4782–4785). The engine works, but model calls through the AI Gateway need valid auth — see the **AI Gateway auth gotcha** above; in production Vercel handles gateway auth natively. `pnpm-workspace.yaml` (project root, gitignored/local-only) is an env fix for build-script approval + Turbopack workspace-root resolution — not part of the chapter.
+
 
 ### Caching strategy
 
